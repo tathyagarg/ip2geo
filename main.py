@@ -28,7 +28,7 @@ class LogHandler(FileSystemEventHandler):
                 f.seek(0, os.SEEK_END)
                 f.seek(f.tell() - MAX_LINE_LENGTH - 1, os.SEEK_SET)
 
-                if (res := f.readline()).strip() == '':
+                if (res := f.readline().strip()) == '':
                     res = f.readline().strip()
 
                 with geoip2.webservice.Client(GEOIP2_ACCOUNT_ID, GEOIP2_LICENSE_KEY, host='geolite.info') as client:
