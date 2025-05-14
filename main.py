@@ -1,0 +1,36 @@
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+
+import geoip2.webservice
+
+import os
+import dotenv
+
+dotenv.load_dotenv()
+
+GEOIP2_ACCOUNT_ID = int(os.getenv("GEOIP2_ACCOUNT_ID") or '')
+GEOIP2_LICENSE_KEY = os.getenv("GEOIP2_LICENSE_KEY") or ''
+
+logfile = "/var/log/nginx/arson.log"
+
+MAX_LINE_LENGTH = 15  # max length of ipv4
+
+class LogHandler(FileSystemEventHandler):
+    def on_modified(self, event):
+        if event.src_path == logfile:
+            with open(logfile, 'r') as f:
+                f.seek(0, os.SEEK_END)
+                f.seek(f.tell() - MAX_LINE_LENGTH - 1, os.SEEK_SET)
+
+                if (res := f.readline()).strip() == '':
+                    res = f.readline().strip()
+
+                with geoip2.webservice.Client(GEOIP2_ACCOUNT_ID, GEOIP2_LICENSE_KEY) as client:
+                    response = client.city(res)
+                    print(f"Lat: {response.location.latitude}, Lon: {response.location.longitude}")
+
+observer = Observer()
+observer.schedule(LogHandler(), path=logfile, recursive=False)
+observer.start()
+
+while True: ...
