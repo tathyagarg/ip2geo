@@ -7,6 +7,7 @@ import dotenv
 import os
 import time
 import csv
+from pathlib import Path
 
 dotenv.load_dotenv()
 
@@ -14,9 +15,11 @@ GEOIP2_ACCOUNT_ID = int(os.getenv("GEOIP2_ACCOUNT_ID") or '')
 GEOIP2_LICENSE_KEY = os.getenv("GEOIP2_LICENSE_KEY") or ''
 
 read_logfile = "/var/log/nginx/arson.log"
-write_logfile = "/var/log/arsonloc.csv"
+write_logfile = "logs/arsonloc.csv"
 
 MAX_LINE_LENGTH = 15
+
+FIELDNAMES = ['timestamp', 'latitude', 'longitude']
 
 class LogHandler(FileSystemEventHandler):
     def on_modified(self, event):
@@ -30,12 +33,16 @@ class LogHandler(FileSystemEventHandler):
 
                 with geoip2.webservice.Client(GEOIP2_ACCOUNT_ID, GEOIP2_LICENSE_KEY, host='geolite.info') as client:
                     response = client.city(res)
-                    with open(write_logfile, 'a') as csvfile:
-                        writer = csv.DictWriter(csvfile, fieldnames=['timestamp', 'latitude', 'longitude'])
 
-                        if csvfile.tell() == 0:
+                    if not Path(write_logfile).exists():
+                        os.makedirs(os.path.dirname(write_logfile), exist_ok=True)
+
+                        with open(write_logfile, 'w') as csvfile:
+                            writer = csv.DictWriter(csvfile, fieldnames=FIELDNAMES)
                             writer.writeheader()
 
+                    with open(write_logfile, 'a') as csvfile:
+                        writer = csv.DictWriter(csvfile, fieldnames=FIELDNAMES)
                         writer.writerow({
                             'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
                             'latitude': response.location.latitude,
