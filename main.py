@@ -19,7 +19,7 @@ write_logfile = "logs/arsonloc.csv"
 
 MAX_LINE_LENGTH = 15
 
-FIELDNAMES = ['timestamp', 'latitude', 'longitude']
+FIELDNAMES = ['timestamp', 'latitude', 'longitude', 'city']
 
 class LogHandler(FileSystemEventHandler):
     def on_modified(self, event):
@@ -46,7 +46,8 @@ class LogHandler(FileSystemEventHandler):
                         writer.writerow({
                             'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
                             'latitude': response.location.latitude,
-                            'longitude': response.location.longitude
+                            'longitude': response.location.longitude,
+                            'city': response.city.name
                         })
 
 observer = Observer()
